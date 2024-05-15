@@ -1,8 +1,8 @@
 const express = require("express");
-const app = express();
 const cors = require("cors");
 require("dotenv").config();
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
+const app = express();
 const port = process.env.PORT || 5000;
 
 // middleware
@@ -25,10 +25,26 @@ async function run() {
     const volunteerPostCollection = client
       .db("volunteerPostDB")
       .collection("volunteerPost");
+    const beAVolunteerCollection = client
+      .db("volunteerPostDB")
+      .collection("beAvolunteerPost");
 
     app.post("/volunteerPost", async (req, res) => {
       const newVolunteer = req.body;
       const result = await volunteerPostCollection.insertOne(newVolunteer);
+      res.send(result);
+    });
+
+    app.post("/beAVolunteerPost", async (req, res) => {
+      const newVolunteer = req.body;
+      const result = await beAVolunteerCollection.insertOne(newVolunteer);
+      res.send(result);
+    });
+
+    app.get("/beAVolunteerPost/:email", async (req, res) => {
+      const result = await beAVolunteerCollection
+        .find({ email: req.params.email })
+        .toArray();
       res.send(result);
     });
 
@@ -38,11 +54,32 @@ async function run() {
       res.send(result);
     });
 
-    // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
+    app.get("/volunteerPost/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const user = await volunteerPostCollection.findOne(query);
+      res.send(user);
+    });
 
-    // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
+    app.get("/volunteerPost/:email", async (req, res) => {
+      const result = await volunteerPostCollection
+        .find({ email: req.params.email })
+        .toArray();
+      res.send(result);
+    });
+
+    app.delete("/volunteerPost/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await volunteerPostCollection.deleteOne(query);
+      res.send(result);
+    });
+
+    // Connect the client to the server	(optional starting in v4.7)
+    // await client.connect();
+
+    // // Send a ping to confirm a successful connection
+    // await client.db("admin").command({ ping: 1 });
     console.log(
       "Pinged your deployment. You successfully connected to MongoDB!"
     );
